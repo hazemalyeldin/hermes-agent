@@ -1,0 +1,20 @@
+test_arbitrary_dict_is_not_a_construction_spec (test_h3_guarded_construction.H3ConstructionTests.test_arbitrary_dict_is_not_a_construction_spec) ... ok
+test_cannot_hold_an_already_unsafe_runtime (test_h3_guarded_construction.H3ConstructionTests.test_cannot_hold_an_already_unsafe_runtime) ... ok
+test_equal_but_wrong_typed_state_is_drift (test_h3_guarded_construction.H3ConstructionTests.test_equal_but_wrong_typed_state_is_drift) ... ok
+test_exact_object_identity_required (test_h3_guarded_construction.H3ConstructionTests.test_exact_object_identity_required) ... ok
+test_frozen_spec_revalidated_at_construction_boundary (test_h3_guarded_construction.H3ConstructionTests.test_frozen_spec_revalidated_at_construction_boundary) ... ok
+test_import_and_construction_have_no_runtime_egress (test_h3_guarded_construction.H3ConstructionTests.test_import_and_construction_have_no_runtime_egress) ... ok
+test_no_tool_auxiliary_package_or_provider_entry_can_execute (test_h3_guarded_construction.H3ConstructionTests.test_no_tool_auxiliary_package_or_provider_entry_can_execute) ... ok
+test_production_factory_default_delegates_arguments_unchanged (test_h3_guarded_construction.H3ConstructionTests.test_production_factory_default_delegates_arguments_unchanged) ... ok
+test_production_factory_seam_holds_without_normal_construction (test_h3_guarded_construction.H3ConstructionTests.test_production_factory_seam_holds_without_normal_construction) ... ok
+test_rejects_missing_or_malformed_identity (test_h3_guarded_construction.H3ConstructionTests.test_rejects_missing_or_malformed_identity) ... ok
+test_rejects_nonlocal_owners (test_h3_guarded_construction.H3ConstructionTests.test_rejects_nonlocal_owners) ... ok
+test_rejects_unbounded_route_and_nonempty_capabilities (test_h3_guarded_construction.H3ConstructionTests.test_rejects_unbounded_route_and_nonempty_capabilities) ... ok
+test_route_client_tools_and_identity_drift_rejected (test_h3_guarded_construction.H3ConstructionTests.test_route_client_tools_and_identity_drift_rejected) ... ok
+test_route_session_room_and_model_overrides_rejected (test_h3_guarded_construction.H3ConstructionTests.test_route_session_room_and_model_overrides_rejected) ... ok
+test_validation_never_releases_for_execution (test_h3_guarded_construction.H3ConstructionTests.test_validation_never_releases_for_execution) ... ok
+
+----------------------------------------------------------------------
+Ran 15 tests in 0.005s
+
+OK
