@@ -41,6 +41,8 @@ def probe(root):
         elif event in {"os.mkdir", "os.remove", "os.rmdir", "os.chmod", "os.utime", "os.truncate"}:
             if event == "os.mkdir" and Path(args[0]).resolve() == home and home.is_dir():
                 return  # Existing directory: mkdir cannot create or replace it.
+            if event == "os.chmod" and Path(args[0]).resolve() == home:
+                reject(f"os.chmod:home:{args[1]:04o}")
             writable(args[0])
         elif event == "socket.gethostname":
             return
@@ -76,11 +78,40 @@ def probe(root):
 
 
 class SandboxTest(unittest.TestCase):
-    def test_real_factory_requires_profile_initialization(self):
+    @unittest.skipUnless(os.name == "nt" and sys.version_info >= (3, 13), "Windows secure mkdir")
+    def test_preprovisioned_home_policy(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder).resolve()
-            for name in ("home", "scratch"):
-                (root / name).mkdir()
+            home = root / "home"
+            home.mkdir(mode=0o700)
+            (root / "scratch").mkdir()
+            self.assertEqual(list(home.iterdir()), [])
+            # Read back the native descriptor before the diagnostic child starts.
+            check = """
+            $ErrorActionPreference = "Stop"
+            $sid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+            $acl = New-Object System.Security.AccessControl.DirectorySecurity
+            $acl.SetAccessRuleProtection($true,$false)
+            foreach ($principal in @($sid,'S-1-5-32-544','S-1-5-18')) {
+                $id = [Security.Principal.SecurityIdentifier]::new($principal)
+                $ace = [Security.AccessControl.FileSystemAccessRule]::new(
+                    $id,'FullControl','ContainerInherit,ObjectInherit','None','Allow')
+                $acl.AddAccessRule($ace)
+            }
+            [IO.Directory]::SetAccessControl($env:H34_HOME,$acl)
+            $acl = Get-Acl -LiteralPath $env:H34_HOME
+            $rules = $acl.GetAccessRules($true,$true,[Security.Principal.SecurityIdentifier])
+            $allowed = @($sid,'S-1-5-32-544','S-1-5-18')
+            if (!$acl.AreAccessRulesProtected -or !$rules.Count) { exit 1 }
+            foreach ($rule in $rules) {
+                if ($rule.IsInherited -or $rule.IdentityReference.Value -notin $allowed) { exit 2 }
+            }
+            if ($sid -notin $rules.IdentityReference.Value) { exit 3 }
+            """
+            powershell = Path(os.environ["SystemRoot"]) / "System32/WindowsPowerShell/v1.0/powershell.exe"
+            subprocess.run([str(powershell), "-NoProfile", "-NonInteractive", "-Command", check],
+                           env={"SystemRoot": os.environ["SystemRoot"], "H34_HOME": str(home)},
+                           check=True, timeout=30)
             env = {key: os.environ[key] for key in ("SystemRoot", "WINDIR", "PATH") if key in os.environ}
             env.update(HERMES_HOME=str(root / "home"), TEMP=str(root / "scratch"),
                        TMP=str(root / "scratch"), TMPDIR=str(root / "scratch"),
@@ -91,7 +122,8 @@ class SandboxTest(unittest.TestCase):
             self.assertEqual(child.returncode, 0, child.stderr)
             report = json.loads(child.stdout.strip().splitlines()[-1])
             print(report)
-            self.assertTrue(report["block"].startswith("write:home"), report)
+            self.assertEqual(report["block"], "os.chmod:home:0700", report)
+            self.assertIn("apply_secure_dir_policy", report["stack"])
             self.assertEqual(sorted(p.relative_to(root).as_posix() for p in root.rglob("*")),
                              ["home", "scratch", "scratch/canary"])
         self.assertFalse(root.exists())
@@ -103,4 +135,3 @@ if __name__ == "__main__":
         probe(Path(sys.argv[1]))
     else:
         unittest.main()
-
